@@ -45,7 +45,7 @@ public class LicenseGenerator {
     // cp dcPublicKey.store src/main/resources
     //
     //#################################################################
-    private static final String PROPERTIES_FILENAME = "LicenseGenerateConfig.properties";
+    private static final String PROPERTIES_LICENSE_GENERATE_FILENAME = "LicenseGenerateConfig.properties";
 
     private String appName;
     private String licenseFileExtension;
@@ -55,11 +55,11 @@ public class LicenseGenerator {
     private String state;
     private String country;
 
-    private String keystoreFilename;     // this app needs the "private" keystore
+    private String keystoreFilename;
     private String keystorePassword;
     private String keyPassword;
     private String alias;
-    private String cipherParamPassword;  // 6+ chars, and both letters and numbers
+    private String cipherParamPassword;
 
     public static void main(String[] args) {
 
@@ -72,7 +72,7 @@ public class LicenseGenerator {
     }
 
     public LicenseGenerator() {
-        // load license config properties
+        // load license generator config properties
         loadLicenseGeneratePropertiesFile();
     }
 
@@ -98,7 +98,6 @@ public class LicenseGenerator {
         // create the license file
         LicenseManager lm = new LicenseManager(licenseParam);
         try {
-            // write the file to the same directory we read it in from
             File file = new File(fileBasename + licenseFileExtension);
             LicenseContent licenseContent = createLicenseContent(licenseParam);
             lm.store(licenseContent, file);
@@ -115,7 +114,7 @@ public class LicenseGenerator {
 
         ClassLoader classLoader = LicenseGenerator.class
                 .getClassLoader();
-        File file = new File(classLoader.getResource(PROPERTIES_FILENAME).getFile());
+        File file = new File(classLoader.getResource(PROPERTIES_LICENSE_GENERATE_FILENAME).getFile());
 
         try (FileInputStream in = new FileInputStream(file)) {
 
@@ -140,9 +139,14 @@ public class LicenseGenerator {
         }
     }
 
-    // Set up the LicenseContent instance. This is the information that will be in the
-    // generated license file.
+    /**
+     * Create LicenseContent instance with specifics information
+     *
+     * @param licenseParam
+     * @return LicenseContent instance
+     */
     private LicenseContent createLicenseContent(LicenseParam licenseParam) {
+
         LicenseContent result = new LicenseContent();
         X500Principal holder = new X500Principal("CN=" + firstName + " " + lastName + ", "
                 + "L=" + city + ", "
@@ -162,10 +166,9 @@ public class LicenseGenerator {
         Date now = new Date();
         result.setIssued(now);
         System.out.println("---- Date = " + now);
-        //now.setYear(now.getYear() + 50);
         Calendar cal = Calendar.getInstance(); // creates calendar
         cal.setTime(now); // sets calendar time/date
-        cal.add(Calendar.MINUTE, 1); // adds one day
+        cal.add(Calendar.MINUTE, 1); // adds one minute
         result.setNotAfter(cal.getTime());
 
         result.setSubject(licenseParam.getSubject());
@@ -174,8 +177,8 @@ public class LicenseGenerator {
 
     private LicenseParam getLicenseParam() {
 
-        // set up an implementation of the KeyStoreParam interface that returns
-        // the information required to work with the keystore containing the private key:
+        //implementation of KeyStoreParam interface
+        // required the keystore containing the private key
         final KeyStoreParam privateKeyStoreParam = new KeyStoreParam() {
             public InputStream getStream() throws IOException {
                 final String resourceName = keystoreFilename;
@@ -200,24 +203,18 @@ public class LicenseGenerator {
             }
         };
 
-        // Set up an implementation of the CipherParam interface to return the password to be
-        // used when performing the PKCS-5 encryption.
         final CipherParam cipherParam = new CipherParam() {
             public String getKeyPwd() {
                 return cipherParamPassword;
             }
         };
 
-        // Set up an implementation of the LicenseParam interface.
-        // Note that the subject string returned by getSubject() must match the subject property
-        // of any LicenseContent instance to be used with this LicenseParam instance.
         LicenseParam licenseParam = new LicenseParam() {
             public String getSubject() {
                 return appName;
             }
 
             public Preferences getPreferences() {
-                // TODO why is this needed for the app that creates the license?
                 //return Preferences.userNodeForPackage(LicenseGenerator.class);
                 return null;
             }

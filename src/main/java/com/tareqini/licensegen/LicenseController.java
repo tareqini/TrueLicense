@@ -20,13 +20,13 @@ import java.util.prefs.Preferences;
  */
 public class LicenseController {
 
-    private static final String PROPERTIES_FILENAME = "LicenseInstallConfig.properties";
+    private static final String PROPERTIES_LICENSE_INSTALL_FILENAME = "LicenseInstallConfig.properties";
 
     private String appName;
     private String keystoreFilename;
     private String keystorePassword;
     private String alias;
-    private String cipherParamPassword;  // 6+ chars, and both letters and numbers
+    private String cipherParamPassword;
 
     public LicenseController() {
         loadLicenseInstallPropertiesFile();
@@ -69,8 +69,7 @@ public class LicenseController {
     }
 
     /**
-     * Prompt the user for the location of their license file, get the filename,
-     * then try to install the file.
+     * Install the license file.
      *
      * @return LicenseContent if the license installed properly, null otherwise.
      */
@@ -84,7 +83,7 @@ public class LicenseController {
 
             File licenseFile = new File(licenseFilename);
             LicenseContent licenseContent = lm.install(licenseFile);
-            // note: you know it worked b/c it didn't throw an exception
+
             return licenseContent;
         } finally {
             try {
@@ -96,8 +95,9 @@ public class LicenseController {
     }
 
     private LicenseParam getLicenseParam() {
-        // set up an implementation of the KeyStoreParam interface that returns
-        // the information required to work with the keystore containing the private key:
+
+        //implementation of KeyStoreParam interface
+        // required the keystore containing the private key
         final KeyStoreParam publicKeyStoreParam = new KeyStoreParam() {
             public InputStream getStream() throws IOException {
                 final InputStream in = LicenseController.class
@@ -123,17 +123,12 @@ public class LicenseController {
             }
         };
 
-        // Set up an implementation of the CipherParam interface to return the password to be
-        // used when performing the PKCS-5 encryption.
         final CipherParam cipherParam = new CipherParam() {
             public String getKeyPwd() {
                 return cipherParamPassword;
             }
         };
 
-        // Set up an implementation of the LicenseParam interface.
-        // Note that the subject string returned by getSubject() must match the subject property
-        // of any LicenseContent instance to be used with this LicenseParam instance.
         return new LicenseParam() {
             public String getSubject() {
                 return appName;
@@ -141,7 +136,6 @@ public class LicenseController {
 
             public Preferences
                     getPreferences() {
-                // TODO why is this needed for the app that creates the license?
 
                 return Preferences.userNodeForPackage(LicenseController.class);
 //                return null;
@@ -163,7 +157,7 @@ public class LicenseController {
 
         ClassLoader classLoader = LicenseController.class
                 .getClassLoader();
-        File file = new File(classLoader.getResource(PROPERTIES_FILENAME).getFile());
+        File file = new File(classLoader.getResource(PROPERTIES_LICENSE_INSTALL_FILENAME).getFile());
 
         try (FileInputStream in = new FileInputStream(file)) {
 
